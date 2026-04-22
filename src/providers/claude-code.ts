@@ -267,7 +267,9 @@ export class ClaudeCodeAdapter implements ProviderAdapter {
     }
 
     // Build normalized turn from result event
-    const turn = this.buildNormalizedTurn(finalResult, model, sessionId, result.exitCode);
+    // execa sets timedOut=true when the wall-clock timeout fires
+    const timedOut = "timedOut" in result && (result as unknown as Record<string, unknown>).timedOut === true;
+    const turn = this.buildNormalizedTurn(finalResult, model, sessionId, result.exitCode, timedOut);
     opts.onTurn(turn);
 
     return {
@@ -387,7 +389,8 @@ export class ClaudeCodeAdapter implements ProviderAdapter {
     resultEvent: ResultEvent | null,
     model: string,
     sessionId: string | null,
-    exitCode: number | undefined
+    exitCode: number | undefined,
+    timedOut = false
   ): NormalizedTurn {
     if (!resultEvent) {
       return {
@@ -422,7 +425,7 @@ export class ClaudeCodeAdapter implements ProviderAdapter {
       }
     }
 
-    const exitReason = this.classifyExitReason(resultEvent, exitCode);
+    const exitReason = this.classifyExitReason(resultEvent, exitCode, timedOut);
 
     return {
       provider: "claude-code",
@@ -440,7 +443,8 @@ export class ClaudeCodeAdapter implements ProviderAdapter {
     };
   }
 
-  private classifyExitReason(result: ResultEvent, exitCode: number | undefined): ExitReason {
+  private classifyExitReason(result: ResultEvent, exitCode: number | undefined, timedOut = false): ExitReason {
+    if (timedOut) return "deadline_kill";
     if (result.subtype === "error_max_budget_usd") return "budget_kill";
     if (result.subtype === "error_max_turns") return "max_turns_kill";
     if (result.errors?.some((e) => /rate.?limit/i.test(e))) return "rate_limited";

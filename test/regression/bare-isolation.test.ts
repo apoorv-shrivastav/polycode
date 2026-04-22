@@ -99,5 +99,5 @@ describe.skipIf(SKIP)("bare-isolation regression", () => {
     } finally {
       rmSync(testDir, { recursive: true, force: true });
     }
-  }, { timeout: 120000 });
+  }, 120000);
 });
