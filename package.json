@@ -1,0 +1,38 @@
+{
+  "name": "polycode",
+  "version": "0.2.0",
+  "description": "Orchestration layer for AI coding CLIs with enforced plan→implement→review workflow",
+  "type": "module",
+  "bin": {
+    "polycode": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:regression": "vitest run test/regression",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "polycode": "node --enable-source-maps dist/cli/index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "cac": "^7.0.0",
+    "execa": "^9.5.2",
+    "pino": "^10.3.1",
+    "ulid": "^2.3.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.19.17",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
