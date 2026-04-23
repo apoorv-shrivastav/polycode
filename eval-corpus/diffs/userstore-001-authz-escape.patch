@@ -1,0 +1,12 @@
+--- a/src/userstore.ts
++++ b/src/userstore.ts
+@@ -72,8 +72,7 @@
+   canAccess(userId: string, resource: string): boolean {
+     const user = this.users.get(userId);
+     if (!user) return false;
+-    if (!user.active) return false;
+-    if (user.role === "admin") return true;
++    if (user.role === "admin" || !user.active) return true;
+     if (user.role === "guest") return resource === "public";
+     return resource !== "admin-panel";
+   }

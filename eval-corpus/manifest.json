@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "codebases": [
+    {
+      "id": "calc",
+      "name": "Calculator utilities",
+      "path": "codebases/calc"
+    },
+    {
+      "id": "userstore",
+      "name": "User store with auth",
+      "path": "codebases/userstore"
+    }
+  ],
+  "defects": [
+    {
+      "id": "calc-001",
+      "codebase": "calc",
+      "category": "off-by-one",
+      "description": "range() uses <= instead of < causing an extra element to be included in the result",
+      "diff_file": "diffs/calc-001-off-by-one-range.patch",
+      "test_file": "tests/calc-001.test.ts",
+      "test_command": "npx tsx tests/calc-001.test.ts",
+      "affected_files": ["src/calc.ts"]
+    },
+    {
+      "id": "calc-002",
+      "codebase": "calc",
+      "category": "null-check-miss",
+      "description": "average() no longer throws on empty array, returns NaN instead due to 0/0 division",
+      "diff_file": "diffs/calc-002-null-check-average.patch",
+      "test_file": "tests/calc-002.test.ts",
+      "test_command": "npx tsx tests/calc-002.test.ts",
+      "affected_files": ["src/calc.ts"]
+    },
+    {
+      "id": "calc-003",
+      "codebase": "calc",
+      "category": "null-check-miss",
+      "description": "divide() no longer guards against division by zero, returns Infinity instead of throwing",
+      "diff_file": "diffs/calc-003-divide-by-zero.patch",
+      "test_file": "tests/calc-003.test.ts",
+      "test_command": "npx tsx tests/calc-003.test.ts",
+      "affected_files": ["src/calc.ts"]
+    },
+    {
+      "id": "calc-004",
+      "codebase": "calc",
+      "category": "off-by-one",
+      "description": "isPrime(2) incorrectly returns false instead of true",
+      "diff_file": "diffs/calc-004-prime-boundary.patch",
+      "test_file": "tests/calc-004.test.ts",
+      "test_command": "npx tsx tests/calc-004.test.ts",
+      "affected_files": ["src/calc.ts"]
+    },
+    {
+      "id": "calc-005",
+      "codebase": "calc",
+      "category": "input-validation",
+      "description": "clamp() no longer validates that min <= max, silently returns wrong results when min > max",
+      "diff_file": "diffs/calc-005-clamp-reversed.patch",
+      "test_file": "tests/calc-005.test.ts",
+      "test_command": "npx tsx tests/calc-005.test.ts",
+      "affected_files": ["src/calc.ts"]
+    },
+    {
+      "id": "userstore-001",
+      "codebase": "userstore",
+      "category": "authz-escape",
+      "description": "canAccess() grants inactive users admin-level access instead of denying them, by conflating the admin check with the inactive check",
+      "diff_file": "diffs/userstore-001-authz-escape.patch",
+      "test_file": "tests/userstore-001.test.ts",
+      "test_command": "npx tsx tests/userstore-001.test.ts",
+      "affected_files": ["src/userstore.ts"]
+    },
+    {
+      "id": "userstore-002",
+      "codebase": "userstore",
+      "category": "input-validation",
+      "description": "validateEmail() no longer rejects emails with multiple @ signs or empty local parts",
+      "diff_file": "diffs/userstore-002-email-validation.patch",
+      "test_file": "tests/userstore-002.test.ts",
+      "test_command": "npx tsx tests/userstore-002.test.ts",
+      "affected_files": ["src/userstore.ts"]
+    },
+    {
+      "id": "userstore-003",
+      "codebase": "userstore",
+      "category": "business-logic",
+      "description": "add() no longer prevents duplicate user IDs, silently overwrites existing users",
+      "diff_file": "diffs/userstore-003-duplicate-add.patch",
+      "test_file": "tests/userstore-003.test.ts",
+      "test_command": "npx tsx tests/userstore-003.test.ts",
+      "affected_files": ["src/userstore.ts"]
+    },
+    {
+      "id": "userstore-004",
+      "codebase": "userstore",
+      "category": "null-check-miss",
+      "description": "update() no longer throws on non-existent user, creates a partial user object instead",
+      "diff_file": "diffs/userstore-004-update-nonexistent.patch",
+      "test_file": "tests/userstore-004.test.ts",
+      "test_command": "npx tsx tests/userstore-004.test.ts",
+      "affected_files": ["src/userstore.ts"]
+    },
+    {
+      "id": "userstore-005",
+      "codebase": "userstore",
+      "category": "resource-leak",
+      "description": "get() returns a direct reference instead of a copy, allowing callers to mutate internal state",
+      "diff_file": "diffs/userstore-005-mutation-leak.patch",
+      "test_file": "tests/userstore-005.test.ts",
+      "test_command": "npx tsx tests/userstore-005.test.ts",
+      "affected_files": ["src/userstore.ts"]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+--- a/src/userstore.ts
++++ b/src/userstore.ts
+@@ -32,8 +32,7 @@
+
+   update(id: string, updates: Partial<Omit<User, "id">>): User {
+     const existing = this.users.get(id);
+-    if (!existing) throw new Error(`User ${id} not found`);
+-    const updated = { ...existing, ...updates };
++    const updated = { ...(existing ?? {} as User), ...updates, id };
+     this.users.set(id, updated);
+     return { ...updated };
+   }

@@ -1,0 +1,9 @@
+--- a/src/userstore.ts
++++ b/src/userstore.ts
+@@ -25,7 +25,7 @@
+
+   get(id: string): User | undefined {
+     const user = this.users.get(id);
+-    return user ? { ...user } : undefined;
++    return user;
+   }

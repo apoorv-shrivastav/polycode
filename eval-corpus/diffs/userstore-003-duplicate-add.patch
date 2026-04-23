@@ -1,0 +1,9 @@
+--- a/src/userstore.ts
++++ b/src/userstore.ts
+@@ -18,7 +18,6 @@
+   add(user: User): void {
+     if (!user.id) throw new Error("User must have an id");
+     if (!user.email) throw new Error("User must have an email");
+-    if (this.users.has(user.id)) throw new Error(`User ${user.id} already exists`);
+     this.users.set(user.id, { ...user });
+   }

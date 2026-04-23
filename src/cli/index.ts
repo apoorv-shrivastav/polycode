@@ -220,9 +220,24 @@ cli
   .option("--conditions <conditions>", "Conditions to run: A,B,C,D", { default: "A,B,C" })
   .option("--output <file>", "Output CSV path", { default: "results.csv" })
   .option("--max-cost-usd <n>", "Hard cost ceiling", { default: "1500" })
-  .action(async (_corpusDir: string, _options: Record<string, unknown>) => {
-    process.stderr.write("[polycode] Eval harness not yet implemented (Week 4).\n");
-    process.exit(1);
+  .action(async (corpusDir: string, options: Record<string, unknown>) => {
+    const { EvalRunner } = await import("../eval/runner.js");
+    const conditions = (options.conditions as string).split(",").map((c) => c.trim()) as Array<"A" | "B" | "C" | "D">;
+    const maxCost = parseFloat(options.maxCostUsd as string);
+    const outputPath = resolve(options.output as string);
+
+    const runner = new EvalRunner();
+    try {
+      const { exitCode } = await runner.run({
+        corpusDir: resolve(corpusDir),
+        conditions,
+        maxCostUsd: maxCost,
+        outputPath,
+      });
+      process.exit(exitCode);
+    } catch (err) {
+      handleError(err);
+    }
   });
 
 // Version and help
