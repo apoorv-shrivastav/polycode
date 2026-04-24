@@ -8,6 +8,7 @@ import { Orchestrator } from "../orchestrator/orchestrator.js";
 import { TraceStore } from "../trace/store.js";
 import { PolycodeError } from "../errors.js";
 import { logger } from "../logger.js";
+import { createAdapter, type ProviderName } from "../providers/index.js";
 import type { SessionMode } from "../models/events.js";
 
 const DEFAULT_DB_PATH = resolve(process.cwd(), ".poly", "trace.db");
@@ -33,7 +34,8 @@ cli
   .option("--mode <mode>", "Execution mode: pir, plan, review", { default: "pir" })
   .option("--policy <file>", "Path to a policy JSON file")
   .option("--budget-usd <n>", "Override policy budget")
-  .option("--reviewer-provider <provider>", "Reviewer provider: same, different", { default: "same" })
+  .option("--implementer-provider <provider>", "Implementer provider: claude-code, codex, gemini", { default: "claude-code" })
+  .option("--reviewer-provider <provider>", "Reviewer provider: claude-code, codex, gemini, or 'same'", { default: "same" })
   .option("--model <id>", "Override default model")
   .option("--session <id>", "Resume an existing session")
   .option("--dry-run", "Print what would happen without spawning CLIs")
@@ -53,7 +55,14 @@ cli
     };
     const mode = modeMap[options.mode as string] ?? "plan-implement-review";
 
-    const orchestrator = new Orchestrator({ dbPath: DEFAULT_DB_PATH });
+    const implProvider = (options.implementerProvider as string) ?? "claude-code";
+    const revProvider = (options.reviewerProvider as string) ?? "same";
+    const adapter = createAdapter(implProvider as ProviderName);
+    const reviewerAdapter = revProvider === "same"
+      ? adapter
+      : createAdapter(revProvider as ProviderName);
+
+    const orchestrator = new Orchestrator({ dbPath: DEFAULT_DB_PATH, adapter, reviewerAdapter });
     try {
       const { sessionId, exitCode } = await orchestrator.run({
         task,
@@ -217,12 +226,14 @@ cli
 // --- polycode eval ---
 cli
   .command("eval <corpus-dir>", "Run the §9 2×2 eval on a defect corpus")
-  .option("--conditions <conditions>", "Conditions to run: A,B,C,D", { default: "A,B,C" })
+  .option("--conditions <conditions>", "Conditions to run: A,B,C,D3,D5", { default: "A,B,C" })
   .option("--output <file>", "Output CSV path", { default: "results.csv" })
   .option("--max-cost-usd <n>", "Hard cost ceiling", { default: "1500" })
+  .option("--reviewer-provider <provider>", "Reviewer provider for Condition D: codex, gemini")
+  .option("--implementer-provider <provider>", "Implementer provider: claude-code, codex, gemini", { default: "claude-code" })
   .action(async (corpusDir: string, options: Record<string, unknown>) => {
     const { EvalRunner } = await import("../eval/runner.js");
-    const conditions = (options.conditions as string).split(",").map((c) => c.trim()) as Array<"A" | "B" | "C" | "D">;
+    const conditions = (options.conditions as string).split(",").map((c) => c.trim()) as Array<"A" | "B" | "C" | "D" | "D3" | "D5">;
     const maxCost = parseFloat(options.maxCostUsd as string);
     const outputPath = resolve(options.output as string);
 
@@ -233,6 +244,8 @@ cli
         conditions,
         maxCostUsd: maxCost,
         outputPath,
+        reviewerProvider: options.reviewerProvider as ProviderName | undefined,
+        implementerProvider: options.implementerProvider as ProviderName | undefined,
       });
       process.exit(exitCode);
     } catch (err) {

@@ -15,6 +15,7 @@ import {
   formatSummaryReport,
 } from "./metrics.js";
 import type { ProviderAdapter } from "../providers/adapter.js";
+import { createAdapter, type ProviderName } from "../providers/index.js";
 
 const ORANGE_LINE_USD = 1000;
 
@@ -24,6 +25,10 @@ export interface EvalRunnerOptions {
   maxCostUsd: number;
   outputPath: string;
   adapter?: ProviderAdapter;
+  /** For Condition D: specify the reviewer provider. */
+  reviewerProvider?: ProviderName;
+  /** For Condition D: specify the implementer provider. */
+  implementerProvider?: ProviderName;
 }
 
 export class EvalRunner {
@@ -304,8 +309,47 @@ export class EvalRunner {
       }
 
       case "D":
-        // Different provider reviewer — deferred to v0.5
-        throw new Error("Condition D not implemented in v0");
+      case "D3":
+      case "D5": {
+        // Cross-provider reviewer per v0.5 §6.1
+        // D3: implementer=CC, reviewer=Codex
+        // D5: implementer=CC, reviewer=Gemini
+        const reviewerProviderName: ProviderName =
+          condition === "D3" ? "codex" :
+          condition === "D5" ? "gemini" :
+          (opts.reviewerProvider ?? "codex");
+
+        const reviewerAdapterInstance = createAdapter(reviewerProviderName);
+        const orchestrator = new Orchestrator({ dbPath, adapter, reviewerAdapter: reviewerAdapterInstance, workDir });
+        try {
+          const reviewPrompt = [
+            "Review the following code change for defects.",
+            "Look for: correctness issues, security vulnerabilities, missing error handling, edge cases.",
+            "",
+            "```diff",
+            defectDiff,
+            "```",
+            "",
+            "Output JSON: { step_id: 'eval', verdict: 'approve'|'request_changes'|'reject', findings: [{ severity, path, line, issue, suggestion }], tests_suggested: [], overall_notes: '' }",
+          ].join("\n");
+
+          const result = await reviewerAdapterInstance.run({
+            role: "reviewer",
+            prompt: reviewPrompt,
+            policy: evalPolicy,
+            bare: true,
+            onTurn: (turn) => { costUsd += turn.costUsd; },
+            onToolEvent: () => {},
+          });
+
+          sessionId = result.turn.providerSession ?? "";
+          caught = this.checkIfDefectCaught(result.textOutput, defect);
+          falsePositive = this.checkForFalsePositives(result.textOutput, defect);
+        } finally {
+          orchestrator.close();
+        }
+        break;
+      }
     }
 
     return {

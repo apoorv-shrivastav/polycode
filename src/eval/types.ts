@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-/** Eval conditions per §9.1 */
-export type EvalCondition = "A" | "B" | "C" | "D";
+/** Eval conditions per §9.1 + §6.1 of v0.5 addendum */
+export type EvalCondition = "A" | "B" | "C" | "D" | "D3" | "D5";
 
 /** A single seeded defect in the corpus. */
 export const DefectSchema = z.object({

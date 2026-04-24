@@ -48,12 +48,19 @@ export interface OrchestratorOptions {
 export class Orchestrator {
   private store: TraceStore;
   private adapter: ProviderAdapter;
+  private reviewerAdapter: ProviderAdapter;
   private workDir: string;
   private turnOrdinal = 0;
 
-  constructor(opts: { dbPath: string; adapter?: ProviderAdapter; workDir?: string }) {
+  constructor(opts: {
+    dbPath: string;
+    adapter?: ProviderAdapter;
+    reviewerAdapter?: ProviderAdapter;
+    workDir?: string;
+  }) {
     this.store = new TraceStore(opts.dbPath);
     this.adapter = opts.adapter ?? new ClaudeCodeAdapter();
+    this.reviewerAdapter = opts.reviewerAdapter ?? this.adapter;
     this.workDir = opts.workDir ?? process.cwd();
   }
 
@@ -76,8 +83,11 @@ export class Orchestrator {
     // §7.1 Preconditions
     await this.assertPreconditions(opts);
 
-    // Check CC version
+    // Check provider versions
     await this.adapter.checkVersion();
+    if (this.reviewerAdapter !== this.adapter) {
+      await this.reviewerAdapter.checkVersion();
+    }
 
     const ccVersion = this.adapter.pinnedVersion;
     const sessionId = opts.sessionId ?? this.store.createSession({
@@ -507,7 +517,7 @@ export class Orchestrator {
       ordinal: this.turnOrdinal++,
       stepId,
       reviewCycle,
-      provider: this.adapter.id,
+      provider: this.reviewerAdapter.id,
       model: opts.model ?? "default",
     });
 
@@ -522,7 +532,7 @@ export class Orchestrator {
     ].join("\n");
 
     const startedAt = Date.now();
-    const result = await this.adapter.run({
+    const result = await this.reviewerAdapter.run({
       role: "reviewer",
       prompt,
       policy: opts.policy,
